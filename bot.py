@@ -1,7 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
-BOT_TOKEN = "8329450751:AAHTSn2cDfoA91ZbyKbx8Y46jcFDbujQZHk"
+BOT_TOKEN = "8484695622:AAHrg3LDvCzUE_2rCEM3uOFmnRRMVhk-wkI"
 ADMIN_IDS = [8091289657]
 STAR_PRICE = 210
 
