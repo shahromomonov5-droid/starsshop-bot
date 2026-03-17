@@ -47,14 +47,14 @@ async def sub_required(update_or_query, context, is_callback=False):
             [InlineKeyboardButton("📢 Kanalga obuna bo'lish", url=f"https://t.me/shaxrom_25")],
             [InlineKeyboardButton("✅ Obuna bo'ldim, tekshirish", callback_data="check_subscription")],
         ]
-        msg = "⚠️ *Botdan foydalanish uchun kanalga obuna bo'ling!*\n\n📢 @shaxrom_25\n\nObuna bo'lgach tekshiring 👇"
+        msg = "⚠️ Botdan foydalanish uchun kanalga obuna bo'ling!\n\n📢 @shaxrom_25\n\nObuna bo'lgach tekshiring 👇"
         if is_callback:
             try:
-                await update_or_query.edit_message_text(msg, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+                await update_or_query.edit_message_text(msg, reply_markup=InlineKeyboardMarkup(keyboard))
             except:
-                await update_or_query.message.reply_text(msg, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+                await update_or_query.message.reply_text(msg, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
-            await update_or_query.message.reply_text(msg, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+            await update_or_query.message.reply_text(msg, reply_markup=InlineKeyboardMarkup(keyboard))
         return False
     return True
 
