@@ -29,9 +29,34 @@ def get_user(user_id, username=None, first_name=None):
 async def check_subscription(bot, user_id):
     try:
         member = await bot.get_chat_member(CHANNEL_ID, user_id)
-        return member.status in [ChatMember.MEMBER, ChatMember.ADMINISTRATOR, ChatMember.OWNER]
-    except:
+        return member.status in ["member", "administrator", "creator"]
+    except Exception as e:
+        print(f"Subscription check error: {e}")
         return False
+
+async def sub_required(update_or_query, context, is_callback=False):
+    """Obuna tekshirib, kerak bo'lsa xabar yuboradi. True = obuna bor"""
+    if is_callback:
+        user_id = update_or_query.from_user.id
+    else:
+        user_id = update_or_query.effective_user.id
+    
+    is_sub = await check_subscription(context.bot, user_id)
+    if not is_sub:
+        keyboard = [
+            [InlineKeyboardButton("📢 Kanalga obuna bo'lish", url=f"https://t.me/shaxrom_25")],
+            [InlineKeyboardButton("✅ Obuna bo'ldim, tekshirish", callback_data="check_subscription")],
+        ]
+        msg = "⚠️ *Botdan foydalanish uchun kanalga obuna bo'ling!*\n\n📢 @shaxrom_25\n\nObuna bo'lgach tekshiring 👇"
+        if is_callback:
+            try:
+                await update_or_query.edit_message_text(msg, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+            except:
+                await update_or_query.message.reply_text(msg, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+        else:
+            await update_or_query.message.reply_text(msg, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+        return False
+    return True
 
 def main_keyboard():
     keyboard = [
@@ -53,19 +78,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user_data["ref_by"] = ref_id
 
     # Kanal obunasini tekshirish
-    is_subscribed = await check_subscription(context.bot, user.id)
-    if not is_subscribed:
-        keyboard = [
-            [InlineKeyboardButton("📢 Kanalga obuna bo'lish", url=f"https://t.me/shaxrom_25")],
-            [InlineKeyboardButton("✅ Obuna bo'ldim, tekshirish", callback_data="check_subscription")],
-        ]
-        await update.message.reply_text(
-            "⚠️ *Botdan foydalanish uchun kanalga obuna bo'lishingiz shart!*\n\n"
-            f"📢 Kanal: @shaxrom_25\n\n"
-            "Obuna bo'lgach, quyidagi tugmani bosing 👇",
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode="Markdown"
-        )
+    if not await sub_required(update, context):
         return
 
     # Referral bonus berish (obuna bo'lgandan keyin)
@@ -142,19 +155,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         return
 
-    # Kanal obunasini tekshirish (har bir tugmada)
-    is_subscribed = await check_subscription(context.bot, user_id)
-    if not is_subscribed:
-        keyboard = [
-            [InlineKeyboardButton("📢 Kanalga obuna bo'lish", url=f"https://t.me/shaxrom_25")],
-            [InlineKeyboardButton("✅ Tekshirish", callback_data="check_subscription")],
-        ]
-        await query.edit_message_text(
-            "⚠️ Botdan foydalanish uchun kanalga obuna bo'ling!\n\n"
-            f"📢 @shaxrom_25",
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-        return
+    # Kanal obunasini tekshirish
+    if query.data != "check_subscription":
+        if not await sub_required(query, context, is_callback=True):
+            return
 
     if query.data == "deposit":
         keyboard = [
@@ -374,21 +378,9 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state = user_state.get(user_id, "")
     user_data = get_user(user_id, update.effective_user.username, update.effective_user.first_name)
 
-    # Kanal obunasini tekshirish
-    if text not in ["⭐ Stars xarid qilish", "👑 Premium xarid qilish", "🛒 Buyurtmalarim",
-                    "👥 Referal", "💵 Balans", "ℹ️ Bot haqida", "📞 Bog'lanish"] or state:
-        pass
-    else:
-        is_subscribed = await check_subscription(context.bot, user_id)
-        if not is_subscribed:
-            keyboard = [
-                [InlineKeyboardButton("📢 Kanalga obuna bo'lish", url=f"https://t.me/shaxrom_25")],
-                [InlineKeyboardButton("✅ Tekshirish", callback_data="check_subscription")],
-            ]
-            await update.message.reply_text(
-                "⚠️ Botdan foydalanish uchun kanalga obuna bo'ling!\n\n📢 @shaxrom_25",
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+    # Kanal obunasini tekshirish - barcha xabarlarda
+    if not state:
+        if not await sub_required(update, context):
             return
 
     if text == "⭐ Stars xarid qilish":
@@ -627,4 +619,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
